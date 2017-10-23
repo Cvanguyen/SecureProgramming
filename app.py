@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, session, redirect, flash, url_for
-from flask_mysql import MySQL 
+from flask import Flask, render_template, request, session, flash
+from flaskext.mysql import MySQL 
 from datetime import timedelta
-import hashlib, uuid, os, sys, re
+import hashlib, uuid, os, sys, re, ctypes
 import ConfigParser
 import subprocess 
 
@@ -14,6 +14,9 @@ app.config['MYSQL_DATABASE_PASSWORD'] = '1234'
 app.config['MYSQL_DATABASE_DB'] = 'SecureWebApp'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
+db = mysql.connect()
+print "Connection Established!!"
+cursor = db.cursor()
 
 #create session 
 #@app.before_request
@@ -26,64 +29,31 @@ mysql.init_app(app)
 def main():
 	return render_template('index.html')
 
-@app.route('/ShowRegister', methods=['GET'])
-def ShowRegister():
-		return render_template('register.html')
-
-@app.route("/register", methods=['POST'])
+@app.route('/register', methods=['POST','GET'])
 def register(): 
-	try:
-		client = None 
+		#client = None 
 		#get username 
+	if request.methods == 'POST':
 		username = request.form['username']
-		if username == "":
-			flash("Username is needed!")
-			return redirect(url_for('ShowRegister'), code=302)
-		#check for username based on white list
-		qualify = name_validation(username)
-		if not qualify:
-			flash("Invalid username! Username must have 4-15 characters with only alphabets and numbers") 
-			return redirect(url_for('ShowRegister'), code=302)
-
-		#get password 
 		password = request.form['password']
-		if password == "":
-			flash("Password is needed!")
-			return redirect(url_for('ShowRegister'), code=302)
-		#check for password based on white list	
-		qualify = password_validation(password)
-		if not qualify:
-			flash("Password must have 4-15 characters with special characters ! @ # $ % ^ & * ( )")
-			return redirect(url_for('ShowRegister'), code=302)
+			
+		query = "select username from user where username='"+username+"'"
+		cursor.execute(query)
+		if cursor.rowcount <> 0:
+			message='Username already exists!'
+			return render_template('register.html', message=message)
 
-		#get random salt to hash with the password
+			#get random salt to hash with the password
 		salt = uuid.uuid4().hex
 		hashed_password = hex_generator(password+salt)
 
-		if username and password: 
-			conn = mysql.connect()
-			cursor = conn.cursor()
-			cursor.callproc('check_user',(username,hashed_password))
-			data = cursor.fetchall()
-
-			if len(data) is 0: 
-				conn.commit()
-				flash("User created successfully!")
-				return json.dumps({'message':'User created successfully !'})
-				#return redirect(url_for('main'),code=302)
-			else:
-				flash("Error!")
-				json.dumps({'error':str(data[0])})
-				#return redirect(url_for('main'),code=302)
-	except:
-		flash("Error has occured!") 
-		return redirect(url_for('main'),code=302)
-	finally: 
-		#erasing password 
-		password = ""
-		password += ""
-		cursor.close()
-		conn.close()
-
+		query = "insert into user (username,password) values ('"+username+"','"+hashed_password+"')"
+		message = 'Account created successfully!'
+		cursor.execute(query)
+		db.commit()
+		return render_template('index.html', message=message)
+	else: 
+		return render_template('register.html')
+		
 if __name__ == "__main__":
 	app.run()

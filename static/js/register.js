@@ -1,5 +1,5 @@
 $(function(){
-	$('#btnRegister').click(function(){
+	$('#btnRegister').on("click",(function(){
 		
 		$.ajax({
 			url: '/register',
@@ -13,4 +13,6 @@ $(function(){
 			}
 		});
 	});
+});
+
 });

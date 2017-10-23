@@ -7,8 +7,6 @@
  
     <link href="http://getbootstrap.com/examples/jumbotron-narrow/jumbotron-narrow.css" rel="stylesheet">
     <link href="../static/register.css" rel="stylesheet">
-    <script src="../static/js/jquery-3.2.1.js"></script>
-    <<script src="../static/js/register.js"></script>
 
 </head>
 
@@ -18,12 +16,12 @@
 		<div class="header"> 
 			<h4 style="padding: 20px">Secure Scan Web</h4>
 			<p class="lead"></p>
-			<form class="form-register">
+			<form action="/register" method=post>
 			<label for="name" class="sr-only">Username</label>
-			<input type="username" name="inputName" id="inputName" class="form-control" placeholder="Username" required autofocus>
+			<input type="username" name="inputName" id="inputName" class="form-control" placeholder="Username" required pattern="^[a-z0-9A-Z]{4,15}$" title="Invalid username! Username must have 4-15 characters with only alphabets and numbers">
 			<label for="password" class="sr-only">Password</label>
-			<input type="password" name="inputPassword" id="inputPassword" class="form-control" placeholder="Password" required>
-			<button id="btnRegister" class="btn btn-lg btn-primary btn-block" type="button">Register</button>
+			<input type="password" name="inputPassword" id="inputPassword" class="form-control" placeholder="Password" required pattern="^[a-z0-9A-Z._!@#$%^&*]{8,15}$" title="Password must have 4-15 characters with special characters ! @ # $ % ^ & * ( )">
+			<input type = "submit" name="reister" value="Register">
 
 			</form>
 		</div>	
