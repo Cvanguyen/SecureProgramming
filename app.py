@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, session, flash
 from flaskext.mysql import MySQL 
 from datetime import timedelta
-import hashlib, uuid, os, sys, re, ctypes
+import hashlib, uuid, os, sys, ctypes, bcrypt
 import ConfigParser
 import subprocess 
 
@@ -25,9 +25,27 @@ cursor = db.cursor()
 #	session.permanent = True;
 #	app.permanent_session_lifetime = timedelta(minutes=5)
 
-@app.route('/', methods=['GET'])
-def main():
-	return render_template('index.html')
+@app.route('/', methods=['POST','GET'])
+@app.route('/index.html')
+@app.route('/index', methods=['POST','GET'])
+def login():
+	if request.methods == 'POST':
+		username = request.form['username']
+		password = request.form['password']
+		query = "select password from user where username = '"+username+"'"
+		cursor.execute(query)
+		if cursor.rowcount == 1:
+			result = cursor.fetchall()
+			for row in result:
+				hashed = bcrypt.hashpw(password, row[0])
+
+				if hashed == row[0]:
+					return render_template('upload.html', username = username)
+				else: 
+					return render_template('login.html')
+	else:
+		return render_template('login.html')
+
 
 @app.route('/register', methods=['POST','GET'])
 def register(): 
@@ -43,9 +61,8 @@ def register():
 			message='Username already exists!'
 			return render_template('register.html', message=message)
 
-			#get random salt to hash with the password
-		salt = uuid.uuid4().hex
-		hashed_password = hex_generator(password+salt)
+		#hash password
+		hashed_password = bycrypt.hashpw(password,bcrypt.gensalt())
 
 		query = "insert into user (username,password) values ('"+username+"','"+hashed_password+"')"
 		message = 'Account created successfully!'
@@ -54,6 +71,7 @@ def register():
 		return render_template('index.html', message=message)
 	else: 
 		return render_template('register.html')
-		
+
+
 if __name__ == "__main__":
 	app.run()
